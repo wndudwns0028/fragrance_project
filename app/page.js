@@ -19,7 +19,11 @@ export default function HomePage() {
   useEffect(() => {
     fetch("http://localhost:8000/fragrances") // FastAPI 서버에서 scent 목록을 가져옴
       .then((res) => res.json()) // JSON 형식으로 응답 변환
-      .then((data) => setScentCategories(data)) // 받아온 데이터를 상태에 저장
+      .then((data) => {
+        console.log("받아온 데이터:", data);  // 이 로그를 확인하세요
+        setScentCategories(data);
+      }) //setScentCategories(data)) // 받아온 데이터를 상태에 저장
+      
       .catch((err) => console.error("API fetch error:", err)); // 오류 발생 시 로그 출력
   }, []);
 
