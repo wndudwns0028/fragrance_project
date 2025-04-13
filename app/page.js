@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import Link from "next/link";  // 페이지 이동을 위한 Link 컴포넌트 추가
 
 // scent: 향기 카테고리 이름 (예: 플로럴 향)
 // fragrances: 해당 카테고리에 포함된 개별 향기들 (예: 로즈, 라벤더 등)
@@ -20,10 +21,9 @@ export default function HomePage() {
     fetch("http://localhost:8000/fragrances") // FastAPI 서버에서 scent 목록을 가져옴
       .then((res) => res.json()) // JSON 형식으로 응답 변환
       .then((data) => {
-        console.log("받아온 데이터:", data);  // 이 로그를 확인하세요
-        setScentCategories(data);
-      }) //setScentCategories(data)) // 받아온 데이터를 상태에 저장
-      
+        console.log("받아온 데이터:", data);  // 받아온 데이터 확인용 콘솔 출력
+        setScentCategories(data); // 받아온 데이터를 상태에 저장
+      })
       .catch((err) => console.error("API fetch error:", err)); // 오류 발생 시 로그 출력
   }, []);
 
@@ -86,12 +86,17 @@ export default function HomePage() {
               >
                 {/* 개별 fragrance 항목들 */}
                 {category.fragrances.map((fragrance, i) => (
-                  <div 
+                  // 👉 각 fragrance 이름을 클릭하면 해당 페이지로 이동하는 Link 추가
+                  <Link 
                     key={i}
-                    className="px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer rounded"
+                    href={`/products/shampoo/${encodeURIComponent(fragrance)}`} // 이동할 경로 설정
                   >
-                    {fragrance}
-                  </div>
+                    <div 
+                      className="px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer rounded"
+                    >
+                      {fragrance}
+                    </div>
+                  </Link>
                 ))}
               </motion.div>
             )}
