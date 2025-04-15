@@ -1,108 +1,111 @@
-"use client";
+"use client"; // Next.js의 client component로 설정 (브라우저에서 동작)
 
 import React, { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import Link from "next/link";  // 페이지 이동을 위한 Link 컴포넌트 추가
-
-// scent: 향기 카테고리 이름 (예: 플로럴 향)
-// fragrances: 해당 카테고리에 포함된 개별 향기들 (예: 로즈, 라벤더 등)
+import { motion } from "framer-motion"; // 애니메이션 라이브러리
+import Link from "next/link"; // 페이지 이동을 위한 컴포넌트
 
 export default function HomePage() {
-  // 마우스를 올린 scent(향기 그룹) 이름을 저장
+  // 🔸 백엔드에서 받아온 전체 fragrance 데이터 저장
+  const [allData, setAllData] = useState([]);
+
+  // 🔸 현재 마우스를 올린 제품 이름 (예: "shampoo")
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+
+  // 🔸 현재 마우스를 올린 scent 이름 (예: "과일향")
   const [hoveredScent, setHoveredScent] = useState(null);
 
-  // 백엔드에서 받아온 scent 카테고리 배열
-  const [scentCategories, setScentCategories] = useState([]);
-
-  // 페이지 로딩 시 FastAPI 백엔드에서 향기 카테고리 데이터 가져오기
+  // 🔸 컴포넌트가 처음 로드될 때 실행되는 API 호출
   useEffect(() => {
-    fetch("http://localhost:8000/fragrances") // FastAPI 서버에서 scent 목록을 가져옴
-      .then((res) => res.json()) // JSON 형식으로 응답 변환
-      .then((data) => {
-        console.log("받아온 데이터:", data);  // 받아온 데이터 확인용 콘솔 출력
-        setScentCategories(data); // 받아온 데이터를 상태에 저장
-      })
-      .catch((err) => console.error("API fetch error:", err)); // 오류 발생 시 로그 출력
+    fetch("http://localhost:8000/fragrances") // FastAPI 백엔드에서 전체 데이터 가져오기
+      .then((res) => res.json())
+      .then((data) => setAllData(data)) // 상태로 저장
+      .catch((err) => console.error("API fetch error:", err)); // 오류 출력
   }, []);
 
+  // 🔸 전체 데이터에서 고유한 제품 이름 목록 추출 (중복 제거)
+  const productList = [...new Set(allData.map((item) => item.product))];
+
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-4">
-      {/* 페이지 타이틀 + 애니메이션 */}
-      <motion.h1 
-        className="text-4xl font-bold mb-6 text-center"
-        initial={{ opacity: 0, y: -20 }} // 초기 상태 (살짝 위에 있음)
-        animate={{ opacity: 1, y: 0 }}   // 등장 애니메이션
-        transition={{ duration: 0.5 }}   // 애니메이션 지속 시간
-      >
-        향기 기반 화장품 추천
-      </motion.h1>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-6">
+      {/* 페이지 상단 제목 */}
+      <h1 className="text-3xl font-bold mb-6">향기 기반 화장품 추천</h1>
 
-      {/* 검색창 영역 */}
-      <div className="w-full max-w-lg">
-        <Input 
-          type="text" 
-          placeholder="원하는 향을 검색해보세요..." 
-          className="mb-4" 
-        />
-        <Button className="w-full">
-          검색
-        </Button>
-      </div>
-
-      {/* 향기 카테고리 네비게이션 (상단 메뉴) */}
-      <nav className="mt-8 w-full max-w-3xl bg-white p-4 shadow-md rounded-lg flex justify-around">
-        {scentCategories.map((category, index) => (
-          <div 
-            key={index} 
+      {/* 제품 리스트 출력 영역 */}
+      <div className="flex gap-4">
+        {productList.map((product) => (
+          <div
+            key={product}
             className="relative"
-            onMouseEnter={() => setHoveredScent(category.scent)} // 마우스 올리면 상태 변경
+            // 마우스를 올리면 해당 제품을 hover 상태로 설정
+            onMouseEnter={() => setHoveredProduct(product)}
+            // 마우스를 벗어났을 때 하위 드롭박스까지 벗어난 경우 hover 해제
             onMouseLeave={(e) => {
-              // 자식 요소로 마우스가 이동한 경우 상태 유지
               if (!e.currentTarget.contains(e.relatedTarget)) {
-                setHoveredScent(null); // 아니면 초기화
+                setHoveredProduct(null);
+                setHoveredScent(null);
               }
             }}
           >
-            {/* scent 이름 (큰 그룹) */}
-            <button className="text-lg font-semibold px-4 py-2 hover:text-blue-500">
-              {category.scent}
-            </button>
+            {/* 🔹 제품 버튼 (예: shampoo, bodywash 등) - 클릭 시 해당 제품 페이지로 이동 */}
+            <Link href={`/${product}`}>
+              <div className="px-4 py-2 bg-white rounded shadow text-lg text-center cursor-pointer hover:bg-gray-200">
+                {product}
+              </div>
+            </Link>
 
-            {/* fragrance 리스트 (드롭다운) */}
-            {hoveredScent === category.scent && (
-              <motion.div 
-                className="absolute left-0 top-full mt-2 bg-white shadow-lg rounded-lg p-3"
+            {/* 🔹 scent 드롭다운 메뉴 (제품에 마우스를 올렸을 때만 표시) */}
+            {hoveredProduct === product && (
+              <motion.div
+                className="absolute top-full left-1/2 -translate-x-1/2 bg-white shadow-lg rounded-lg p-3 z-20 w-48"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                onMouseEnter={() => setHoveredScent(category.scent)} // 드롭다운 위에 마우스 있으면 유지
-                onMouseLeave={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget)) {
-                    setHoveredScent(null);
-                  }
-                }}
               >
-                {/* 개별 fragrance 항목들 */}
-                {category.fragrances.map((fragrance, i) => (
-                  // 👉 각 fragrance 이름을 클릭하면 해당 페이지로 이동하는 Link 추가
-                  <Link 
-                    key={i}
-                    href={`/products/shampoo/${encodeURIComponent(fragrance)}`} // 이동할 경로 설정
-                  >
-                    <div 
-                      className="px-4 py-2 text-gray-700 hover:bg-gray-200 cursor-pointer rounded"
+                {/* 현재 제품에 속한 scent들만 필터링해서 출력 */}
+                {allData
+                  .filter((item) => item.product === product)
+                  .map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="relative px-3 py-1 text-gray-800 hover:bg-gray-100 rounded cursor-pointer"
+                      onMouseEnter={() => setHoveredScent(item.scent)}
+                      onMouseLeave={(e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                          setHoveredScent(null);
+                        }
+                      }}
                     >
-                      {fragrance}
+                      {/* scent 이름 출력 및 해당 scent 페이지로 이동 */}
+                      <Link href={`/${product}/${item.scent_slug}`}>
+                        <div className="hover:underline">{item.scent}</div>
+                      </Link>
+
+                      {/* 🔹 fragrance 드롭다운 (scent에 마우스를 올렸을 때만 표시) */}
+                      {hoveredScent === item.scent && (
+                        <motion.div
+                          className="absolute top-0 left-full ml-2 bg-white shadow-lg rounded-lg p-3 w-48 z-30"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
+                          {/* 해당 scent에 속한 fragrance들 출력 */}
+                          {item.fragrances.map((frag, i) => (
+                            <Link
+                              key={i}
+                              href={`/${product}/${item.scent_slug}/${frag.slug}`}
+                            >
+                              <div className="px-3 py-1 text-gray-700 hover:bg-gray-200 rounded">
+                                {frag.name}
+                              </div>
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
                     </div>
-                  </Link>
-                ))}
+                  ))}
               </motion.div>
             )}
           </div>
         ))}
-      </nav>
+      </div>
     </div>
   );
 }
