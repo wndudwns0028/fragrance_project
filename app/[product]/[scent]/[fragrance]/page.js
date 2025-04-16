@@ -16,7 +16,7 @@ export default function FragranceDetailPage() {
 
   // 1. 전체 scent 데이터 중에서 해당 fragrance 정보를 가져옴
   useEffect(() => {
-    fetch("http://localhost:8000/fragrances")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/fragrances`)
       .then((res) => res.json())
       .then((data) => {
         // product와 scent_slug로 해당 scent 그룹 찾기

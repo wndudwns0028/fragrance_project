@@ -16,7 +16,7 @@ export default function ProductPage() {
 
   // 컴포넌트 로드 시 백엔드에서 모든 fragrance 정보 불러오고 필터링
   useEffect(() => {
-    fetch("http://localhost:8000/fragrances")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/fragrances`)
       .then((res) => res.json())
       .then((data) => {
         const filtered = data.filter((item) => item.product === product);

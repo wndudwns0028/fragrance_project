@@ -17,7 +17,7 @@ export default function ScentPage() {
   // 컴포넌트 마운트 시 실행
   useEffect(() => {
     // 1. scent 상세 정보 불러오기
-    fetch("http://localhost:8000/fragrances")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/fragrances`)
       .then((res) => res.json())
       .then((data) => {
         const target = data.find(

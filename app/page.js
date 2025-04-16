@@ -16,7 +16,7 @@ export default function HomePage() {
 
   // 🔸 컴포넌트가 처음 로드될 때 실행되는 API 호출
   useEffect(() => {
-    fetch("http://localhost:8000/fragrances") // FastAPI 백엔드에서 전체 데이터 가져오기
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/fragrances`) // FastAPI 백엔드에서 전체 데이터 가져오기
       .then((res) => res.json())
       .then((data) => setAllData(data)) // 상태로 저장
       .catch((err) => console.error("API fetch error:", err)); // 오류 출력
