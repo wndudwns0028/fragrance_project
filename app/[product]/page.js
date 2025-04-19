@@ -5,15 +5,18 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 
 /**
- * 제품 메인 페이지 (/shampoo 등)
- * - 향기 카테고리 + 전체 관련 상품을 함께 보여주는 페이지
+ * 제품 메인 페이지 (예: /shampoo)
+ * - 향기 카테고리 + 네이버 상품 리스트 표시
+ * - 가격 정렬 버튼 제공 (오름차순 / 내림차순)
  */
 export default function ProductPage() {
-  const { product } = useParams();
+  const { product } = useParams(); // URL에서 제품명 가져오기 (예: shampoo)
 
-  const [scents, setScents] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [scents, setScents] = useState([]); // 해당 제품에 대한 scent+fragrance 정보
+  const [products, setProducts] = useState([]); // 네이버 API 상품 목록
+  const [sortOrder, setSortOrder] = useState("asc"); // 가격 정렬 순서 (asc or desc)
 
+  // 데이터 불러오기: scent 목록 + 네이버 API 상품
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/fragrances`)
       .then((res) => res.json())
@@ -21,15 +24,18 @@ export default function ProductPage() {
         const filtered = data.filter((item) => item.product === product);
         setScents(filtered);
 
-        // fragrance 이름들만 전부 추출해서 API 요청
         const allFrags = filtered.flatMap((item) =>
           item.fragrances.map((f) => f.name)
         );
 
-        // 각 fragrance 이름으로 네이버 API 요청
+        // fragrance 이름 기준으로 상품 검색
         allFrags.forEach((frag) => {
           const query = `${product} ${frag}`;
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/naver/search?query=${encodeURIComponent(query)}`)
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/naver/search?query=${encodeURIComponent(
+              query
+            )}`
+          )
             .then((res) => res.json())
             .then((res) => {
               if (res.items) {
@@ -42,30 +48,49 @@ export default function ProductPage() {
       .catch((err) => console.error("fragrance 데이터 오류:", err));
   }, [product]);
 
+  // 가격 정렬된 리스트 반환
+  const sortedProducts = [...products].sort((a, b) => {
+    const priceA = parseInt(a.lprice, 10);
+    const priceB = parseInt(b.lprice, 10);
+    return sortOrder === "asc" ? priceA - priceB : priceB - priceA;
+  });
+
+  // 정렬 방식 토글 함수
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  };
+
   return (
     <div className="min-h-screen bg-white p-8">
-      {/* 홈으로 이동 */}
+      {/* 🔙 홈으로 돌아가기 */}
       <Link href="/" className="text-blue-500 underline mb-4 block">
         ← 홈으로
       </Link>
 
-      {/* 제품명 출력 */}
-      <h1 className="text-4xl font-bold text-center mb-8 capitalize">
+      {/* 🔠 제품 이름 */}
+      <h1 className="text-4xl font-bold text-center mb-4 capitalize">
         {product}
       </h1>
 
-      {/* scent + fragrance 목록 */}
+      {/* 🔘 정렬 토글 버튼 */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={toggleSortOrder}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          가격 {sortOrder === "asc" ? "▲ 오름차순" : "▼ 내림차순"}
+        </button>
+      </div>
+
+      {/* 향기 목록 (대분류 + 세부 향기) */}
       <div className="flex flex-wrap gap-6 justify-center mb-12">
         {scents.map((item, index) => (
           <div key={index} className="bg-gray-100 p-4 rounded-lg shadow w-72">
-            {/* scent 이름 - scent 상세 페이지로 이동 */}
             <Link href={`/${product}/${item.scent_slug}`}>
               <h2 className="text-xl font-semibold mb-2 hover:underline cursor-pointer">
                 {item.scent}
               </h2>
             </Link>
-
-            {/* fragrance 리스트 */}
             <div className="flex flex-wrap gap-2">
               {item.fragrances.map((f, i) => (
                 <Link
@@ -82,13 +107,13 @@ export default function ProductPage() {
         ))}
       </div>
 
-      {/* 전체 관련 상품 출력 */}
+      {/* 🛍 전체 상품 목록 */}
       <h2 className="text-2xl font-bold mb-4">전체 관련 상품</h2>
-      {products.length === 0 ? (
+      {sortedProducts.length === 0 ? (
         <p className="text-gray-500">관련 상품이 없습니다.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((item, idx) => (
+          {sortedProducts.map((item, idx) => (
             <div
               key={idx}
               className="border rounded-lg shadow p-4 bg-white flex flex-col"
